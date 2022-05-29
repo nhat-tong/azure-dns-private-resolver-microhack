@@ -5,7 +5,7 @@ resource "random_string" "random" {
 }
 
 resource "azurerm_storage_account" "sa" {
-    name = "spoke01-${random_string.random.result}-sa"
+    name = "spoke01${random_string.random.result}sa"
     location = azurerm_resource_group.spoke01-rg.location
     resource_group_name = azurerm_resource_group.spoke01-rg.name
 
