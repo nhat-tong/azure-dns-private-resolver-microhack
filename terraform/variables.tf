@@ -4,7 +4,7 @@
 
 variable "onpremise_location" {
     type = string
-    default = "northeurope"
+    default = "westcentralus"
     description = "On-premise resources location"
 }
 
@@ -16,7 +16,7 @@ variable "onpremise_bgp_asn" {
 
 variable "azure_location" {
     type = string
-    default = "westeurope"
+    default = "eastus2"
     description = "Azure resources location"
 }
 
