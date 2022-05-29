@@ -59,17 +59,17 @@ resource "azurerm_private_dns_zone_virtual_network_link" "contoso_azure" {
 
 
 #####################################################################################
-# Azure Private DNS Zone - privatelink.postgres.database.azure.com linked to hub-vnet
+# Azure Private DNS Zone - privatelink.blob.core.windows.net linked to hub-vnet
 #####################################################################################
 
-resource "azurerm_private_dns_zone" "privatelink_postgres_database_azure_com" {
-  name                = "privatelink.postgres.database.azure.com"
+resource "azurerm_private_dns_zone" "privatelink_blob_private_zone" {
+  name                = "privatelink.blob.core.windows.net"
   resource_group_name = azurerm_resource_group.hub-rg.name
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "privatelink_postgres_hub" {
+resource "azurerm_private_dns_zone_virtual_network_link" "privatelink_blob_hub" {
   name                  = "link"
   resource_group_name   = azurerm_resource_group.hub-rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.privatelink_postgres_database_azure_com.name
+  private_dns_zone_name = azurerm_private_dns_zone.privatelink_blob_private_zone.name
   virtual_network_id    = azurerm_virtual_network.hub-vnet.id
 }
