@@ -33,7 +33,7 @@ variable "admin_password" {
 
 variable "vm_size" {
   type = string
-  default = "Standard_DS1_v2"
+  default = "Standard_DC1s_v3"
   description = "VM Size"
 }
 

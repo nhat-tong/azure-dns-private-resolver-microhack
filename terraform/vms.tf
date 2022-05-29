@@ -46,7 +46,6 @@ resource "azurerm_linux_virtual_machine" "onpremise-vm" {
   disable_password_authentication   = "false"
   admin_password                    = var.admin_password
   network_interface_ids             = [azurerm_network_interface.onpremise-vm-nic.id]
-  zone = "1"
 
   os_disk {
     caching              = "ReadWrite"
@@ -111,7 +110,6 @@ resource "azurerm_linux_virtual_machine" "hub-vm" {
   disable_password_authentication   = "false"
   admin_password                    = var.admin_password
   network_interface_ids             = [azurerm_network_interface.hub-vm-nic.id]
-  zone = "1"
 
   os_disk {
     caching              = "ReadWrite"
@@ -176,7 +174,6 @@ resource "azurerm_linux_virtual_machine" "spoke01-vm" {
   disable_password_authentication   = "false"
   admin_password                    = var.admin_password
   network_interface_ids             = [azurerm_network_interface.spoke01-vm-nic.id]
-  zone = "1"
 
   os_disk {
     caching              = "ReadWrite"
