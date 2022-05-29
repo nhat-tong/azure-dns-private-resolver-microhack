@@ -21,7 +21,7 @@ resource "azurerm_private_endpoint" "spoke01-sa-pe" {
 
     private_service_connection {
         name = "spoke01-${random_string.random.result}-sa-privateserviceconnection"
-        private_connection_resource_id = azurerm_storage_account.sa
+        private_connection_resource_id = azurerm_storage_account.sa.id
         subresource_names = [ "blob" ]
         is_manual_connection = false
     }
