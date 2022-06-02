@@ -28,12 +28,12 @@ Register-AzResourceProvider -ProviderNamespace Microsoft.Network
 New-AzDnsResolver -Name hubdnsresolver -ResourceGroupName hub-rg -Location westeurope -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet"
 
 $HubIpConfigOne = New-AzDnsResolverIPConfigurationObject -PrivateIPAllocationMethod Dynamic -SubnetId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet/subnets/snet-dns-inbound"
-New-AzDnsResolverInboundEndpoint -Name dns-hub-inboundendpoint -DnsResolverName hubdnsresolver -ResourceGroupName hub-rg -IPConfiguration $HubIpConfigOne -Location eastus2
-New-AzDnsResolverOutboundEndpoint -DnsResolverName hubdnsresolver -Name dns-hub-outboundendpoint -ResourceGroupName hub-rg -SubnetId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet/subnets/snet-dns-outbound" -Location eastus2
+New-AzDnsResolverInboundEndpoint -Name dns-hub-inboundendpoint -DnsResolverName hubdnsresolver -ResourceGroupName hub-rg -IPConfiguration $HubIpConfigOne -Location westeurope
+New-AzDnsResolverOutboundEndpoint -DnsResolverName hubdnsresolver -Name dns-hub-outboundendpoint -ResourceGroupName hub-rg -SubnetId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet/subnets/snet-dns-outbound" -Location westeurope
 $hubOutboundEndpoint = Get-AzDnsResolverOutboundEndpoint -Name dns-hub-outboundendpoint -DnsResolverName hubdnsresolver -ResourceGroupName hub-rg
 
 # Azure hub - Create the DNS forwarding ruleset
-New-AzDnsForwardingRuleset -Name hubdnsruleset -ResourceGroupName hub-rg -DnsResolverOutboundEndpoint $hubOutboundEndpoint -Location eastus2
+New-AzDnsForwardingRuleset -Name hubdnsruleset -ResourceGroupName hub-rg -DnsResolverOutboundEndpoint $hubOutboundEndpoint -Location westeurope
 $hubDnsForwardingRuleset = Get-AzDnsForwardingRuleset -Name hubdnsruleset -ResourceGroupName hub-rg
 
 # Azure hub - Link hub Forwarding ruleset to hub-vnet
@@ -41,18 +41,18 @@ $hubVnet = Get-AzVirtualNetwork -Name hub-vnet -ResourceGroupName hub-rg
 New-AzDnsForwardingRulesetVirtualNetworkLink -DnsForwardingRulesetName $hubDnsForwardingRuleset.Name -ResourceGroupName hub-rg -VirtualNetworkLinkName "vnetlink" -VirtualNetworkId $hubVnet.Id -SubscriptionId "$subscriptionId"
 
 # Azure spoke - Create the DNS forwarding ruleset (not used before challenge 3)
-New-AzDnsForwardingRuleset -Name spokednsruleset -ResourceGroupName spoke01-rg -DnsResolverOutboundEndpoint $hubOutboundEndpoint -Location eastus2
+New-AzDnsForwardingRuleset -Name spokednsruleset -ResourceGroupName spoke01-rg -DnsResolverOutboundEndpoint $hubOutboundEndpoint -Location westeurope
 
 # On-premise - Create the DNS resolver instance
 New-AzDnsResolver -Name onpremisednsresolver -ResourceGroupName onpremise-rg -Location northeurope -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet"
 
 $OnpremiseIpConfigOne = New-AzDnsResolverIPConfigurationObject -PrivateIPAllocationMethod Dynamic -SubnetId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet/subnets/snet-dns-inbound"
-New-AzDnsResolverInboundEndpoint -Name dns-onpremise-inboundendpoint -DnsResolverName onpremisednsresolver -ResourceGroupName onpremise-rg -IPConfiguration $OnpremiseIpConfigOne -Location westcentralus
-New-AzDnsResolverOutboundEndpoint -DnsResolverName onpremisednsresolver -Name dns-onpremise-outboundendpoint -ResourceGroupName onpremise-rg -SubnetId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet/subnets/snet-dns-outbound" -Location westcentralus
+New-AzDnsResolverInboundEndpoint -Name dns-onpremise-inboundendpoint -DnsResolverName onpremisednsresolver -ResourceGroupName onpremise-rg -IPConfiguration $OnpremiseIpConfigOne -Location northeurope
+New-AzDnsResolverOutboundEndpoint -DnsResolverName onpremisednsresolver -Name dns-onpremise-outboundendpoint -ResourceGroupName onpremise-rg -SubnetId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet/subnets/snet-dns-outbound" -Location northeurope
 $OnpremiseOutboundEndpoint = Get-AzDnsResolverOutboundEndpoint -Name dns-onpremise-outboundendpoint -DnsResolverName onpremisednsresolver -ResourceGroupName onpremise-rg
 
 # On-premise - Create the DNS forwarding ruleset
-New-AzDnsForwardingRuleset -Name onpremisednsruleset -ResourceGroupName onpremise-rg -DnsResolverOutboundEndpoint $OnpremiseOutboundEndpoint -Location westcentralus
+New-AzDnsForwardingRuleset -Name onpremisednsruleset -ResourceGroupName onpremise-rg -DnsResolverOutboundEndpoint $OnpremiseOutboundEndpoint -Location northeurope
 $OnpremiseDnsForwardingRuleset = Get-AzDnsForwardingRuleset -Name onpremisednsruleset -ResourceGroupName onpremise-rg
 
 # On-premise - Link onpremise Forwarding ruleset to onpremise-vnet
