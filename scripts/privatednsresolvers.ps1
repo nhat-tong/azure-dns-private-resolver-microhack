@@ -25,7 +25,7 @@ Select-AzSubscription -SubscriptionObject (Get-AzSubscription -SubscriptionId $s
 Register-AzResourceProvider -ProviderNamespace Microsoft.Network
 
 # Azure hub - Create the DNS resolver instance
-New-AzDnsResolver -Name hubdnsresolver -ResourceGroupName hub-rg -Location eastus2 -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet"
+New-AzDnsResolver -Name hubdnsresolver -ResourceGroupName hub-rg -Location westeurope -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet"
 
 $HubIpConfigOne = New-AzDnsResolverIPConfigurationObject -PrivateIPAllocationMethod Dynamic -SubnetId "/subscriptions/$subscriptionId/resourceGroups/hub-rg/providers/Microsoft.Network/virtualNetworks/hub-vnet/subnets/snet-dns-inbound"
 New-AzDnsResolverInboundEndpoint -Name dns-hub-inboundendpoint -DnsResolverName hubdnsresolver -ResourceGroupName hub-rg -IPConfiguration $HubIpConfigOne -Location eastus2
@@ -44,7 +44,7 @@ New-AzDnsForwardingRulesetVirtualNetworkLink -DnsForwardingRulesetName $hubDnsFo
 New-AzDnsForwardingRuleset -Name spokednsruleset -ResourceGroupName spoke01-rg -DnsResolverOutboundEndpoint $hubOutboundEndpoint -Location eastus2
 
 # On-premise - Create the DNS resolver instance
-New-AzDnsResolver -Name onpremisednsresolver -ResourceGroupName onpremise-rg -Location westcentralus -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet"
+New-AzDnsResolver -Name onpremisednsresolver -ResourceGroupName onpremise-rg -Location northeurope -VirtualNetworkId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet"
 
 $OnpremiseIpConfigOne = New-AzDnsResolverIPConfigurationObject -PrivateIPAllocationMethod Dynamic -SubnetId "/subscriptions/$subscriptionId/resourceGroups/onpremise-rg/providers/Microsoft.Network/virtualNetworks/onpremise-vnet/subnets/snet-dns-inbound"
 New-AzDnsResolverInboundEndpoint -Name dns-onpremise-inboundendpoint -DnsResolverName onpremisednsresolver -ResourceGroupName onpremise-rg -IPConfiguration $OnpremiseIpConfigOne -Location westcentralus
