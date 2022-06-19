@@ -261,3 +261,4 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
 output outHubVnetId string = resHubVnet.id
 output outHubVpnGwPip string = resHubVpnGwPip.properties['ipAddress']
 output outHubVnetAddressSpace string = resHubVnet.properties['addressSpace'].addressPrefixes[0]
+output outHubFirewallSubnetId string = resHubVnet::resGatewaySubnet.id
