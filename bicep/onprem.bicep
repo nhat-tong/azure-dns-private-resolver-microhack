@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 param pRGLocation string = resourceGroup().location
-var vAzureBgpAsn = 65000
+var vOnPremBgpAsn = 65000
 
 /* ON-PREMISE VIRTUAL NETWORK */
 resource resOnPremiseVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
@@ -50,12 +50,20 @@ resource resOnPremiseVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
     deployment: 'bicep'
     microhack: 'dns-private-resolver'
   }
+
+  resource resGatewaySubnet 'subnets' existing = {
+    name: 'GatewaySubnet'
+  }
+
+  resource resDefaultSubnet 'subnets' existing = {
+    name: 'snet-default'
+  }
 }
 
 /* PRIVATE ZONE */
 resource resOnPremisePrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'contoso.internal'
-  location: pRGLocation
+  location: 'Global'
 }
 
 resource resOnPremiseDnsRecord1 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
@@ -72,9 +80,12 @@ resource resOnPremiseDnsRecord1 'Microsoft.Network/privateDnsZones/A@2020-06-01'
 
 resource resOnPremisePrivateZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${resOnPremisePrivateDnsZone.name}/vnet-link'
+  location: 'Global'
   properties: {
     registrationEnabled: true
-    virtualNetwork: resOnPremiseVnet
+    virtualNetwork: {
+      id: resOnPremiseVnet.id
+    }
   }
 }
 
@@ -105,7 +116,7 @@ resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01'
       tier: 'VpnGw1'
     }
     bgpSettings: {
-      asn: vAzureBgpAsn
+      asn: vOnPremBgpAsn
     }
     ipConfigurations: [
       {
@@ -115,7 +126,7 @@ resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01'
             id: resOnPremiseVpnGwPip.id
           }
           subnet: {
-            id: resOnPremiseVnet.properties.subnets[0].id
+            id: resOnPremiseVnet::resGatewaySubnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -130,6 +141,15 @@ resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01'
 }
 
 /* VIRTUAL MACHINE */
+resource resDiagnosticStorage 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+  name: 'onpremisediag190622'
+  location: pRGLocation
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+}
+
 resource resOnPremNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   name: 'onpremise-vm-ni01'
   location: pRGLocation
@@ -139,7 +159,7 @@ resource resOnPremNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
         name: 'ipConfig1'
         properties: {
           subnet: {
-            id: resOnPremiseVnet.properties['subnets'][1].id
+            id: resOnPremiseVnet::resDefaultSubnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -157,20 +177,30 @@ resource resOnpremVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: 'onpremise-vm'
   location: pRGLocation
   properties: {
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+        storageUri: resDiagnosticStorage.properties['primaryEndpoints'].blob
+      }
+    }
     osProfile: {
+      computerName: 'onpremise-vm'
       adminUsername: 'adminuser'
-      adminPassword: 'Thqnhat@1990'
+      adminPassword: 'Thqnhat@199'
       linuxConfiguration: {
         disablePasswordAuthentication: false
       }
     }
     networkProfile: {
       networkInterfaces: [
-        resOnPremNic
+        {
+          id: resOnPremNic.id
+        }
       ]
     }
     storageProfile: {
       osDisk: {
+        createOption: 'FromImage'
         caching: 'ReadWrite'
         osType: 'Linux'
         name: 'onpremise-vm-od01'
@@ -183,7 +213,7 @@ resource resOnpremVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_DS1_v2'
+      vmSize: 'Standard_D2as_v5'
     }
   }
   tags: {

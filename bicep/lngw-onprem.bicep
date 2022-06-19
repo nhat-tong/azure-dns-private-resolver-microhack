@@ -1,17 +1,29 @@
 targetScope = 'resourceGroup'
 
 param pRGLocation string = resourceGroup().location
-param pHubVpnGwPip string
-param pHubAddressSpace string
+
+resource resAzureVpnPIP 'Microsoft.Network/publicIPAddresses@2021-08-01' existing = {
+  name: 'hub-vpngw-ip'
+  scope: resourceGroup('hub02-rg')
+}
+
+resource resAzureVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' existing = {
+  name: 'hub-vpngw2'
+  scope: resourceGroup('hub02-rg')
+}
 
 resource resOnPremiseLngw 'Microsoft.Network/localNetworkGateways@2021-08-01' = {
   name: 'onpremise-lngw'
   location: pRGLocation
   properties: {
-    gatewayIpAddress: pHubVpnGwPip
+    gatewayIpAddress: resAzureVpnPIP.properties['ipAddress']
+    bgpSettings: {
+      asn: resAzureVpnGw.properties['bgpSettings'].asn
+      bgpPeeringAddress: resAzureVpnGw.properties['bgpSettings'].bgpPeeringAddress
+    }
     localNetworkAddressSpace: {
       addressPrefixes: [
-        pHubAddressSpace
+        '${resAzureVpnGw.properties['bgpSettings'].bgpPeeringAddress}/32'
       ]
     }
   }

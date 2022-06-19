@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
 param pRGLocation string = resourceGroup().location
-var vOnPremiseBgpAsn = 64000
+var vAzureBgpAsn = 64000
 
 /* VIRTUAL NETWORK */
 resource resHubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
@@ -56,17 +56,25 @@ resource resHubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
     deployment: 'bicep'
     microhack: 'dns-private-resolver'
   }
+
+  resource resGatewaySubnet 'subnets' existing = {
+    name: 'GatewaySubnet'
+  }
+
+  resource resDefaultSubnet 'subnets' existing = {
+    name: 'snet-default'
+  }
 }
 
 /* PRIVATE ZONE */
 resource resAzureConsotoPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'contoso.azure'
-  location: pRGLocation
+  location: 'Global'
 }
 
-resource resPostgresPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'privatelink.postgres.database.azure.com'
-  location: pRGLocation
+resource resBlobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: 'privatelink.blob.core.windows.net'
+  location: 'Global'
 }
 
 resource resAzureDnsRecord1 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
@@ -96,18 +104,23 @@ resource resAzureDnsRecord2 'Microsoft.Network/privateDnsZones/A@2020-06-01' = {
 
 resource resAzurePrivateZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
   name: '${resAzureConsotoPrivateDnsZone.name}/vnet-link'
-  location: pRGLocation
+  location: 'Global'
   properties: {
     registrationEnabled: true
-    virtualNetwork: resHubVnet
+    virtualNetwork: {
+      id: resHubVnet.id
+    }
   }
 }
 
-resource resPostgresPrivateZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${resPostgresPrivateDnsZone.name}/postgres-link'
-  location: pRGLocation
+resource resBlobPrivateZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  name: '${resBlobPrivateDnsZone.name}/vnet-link'
+  location: 'Global'
   properties: {
-    virtualNetwork: resHubVnet
+    registrationEnabled: false
+    virtualNetwork: {
+      id: resHubVnet.id
+    }
   }
 }
 
@@ -126,7 +139,7 @@ resource resHubVpnGwPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
 }
 
 resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
-  name: 'hub-vpngw'
+  name: 'hub-vpngw2'
   location: pRGLocation
   properties: {
     gatewayType: 'Vpn'
@@ -138,7 +151,7 @@ resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
       tier: 'VpnGw1'
     }
     bgpSettings: {
-      asn: vOnPremiseBgpAsn
+      asn: vAzureBgpAsn
     }
     ipConfigurations: [
       {
@@ -148,7 +161,7 @@ resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
             id: resHubVpnGwPip.id
           }
           subnet: {
-            id: resHubVnet.properties.subnets[0].id
+            id: resHubVnet::resGatewaySubnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -163,6 +176,15 @@ resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
 }
 
 /* VIRTUAL MACHINE */
+resource resStorageDiagnostic 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+  name: 'hubdiag190622'
+  location: pRGLocation
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+}
+
 resource resHubNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
   name: 'hub-vm-ni01'
   location: pRGLocation
@@ -172,7 +194,7 @@ resource resHubNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
         name: 'ipConfig1'
         properties: {
           subnet: {
-            id: resHubVnet.properties['subnets'][1].id
+            id: resHubVnet::resDefaultSubnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
         }
@@ -190,20 +212,30 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
   name: 'hub-vm'
   location: pRGLocation
   properties: {
+    diagnosticsProfile: {
+      bootDiagnostics: {
+        enabled: true
+        storageUri: resStorageDiagnostic.properties['primaryEndpoints'].blob
+      }
+    }
     osProfile: {
+      computerName: 'hub-vm'
       adminUsername: 'adminuser'
-      adminPassword: 'Thqnhat@1990'
+      adminPassword: 'Thqnhat@199'
       linuxConfiguration: {
         disablePasswordAuthentication: false
       }
     }
     networkProfile: {
       networkInterfaces: [
-        resHubNic
+        {
+          id: resHubNic.id
+        }
       ]
     }
     storageProfile: {
       osDisk: {
+        createOption: 'FromImage'
         caching: 'ReadWrite'
         osType: 'Linux'
         name: 'hub-vm-od01'
@@ -216,7 +248,7 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_DS1_v2'
+      vmSize: 'Standard_D2as_v5'
     }
   }
   tags: {
