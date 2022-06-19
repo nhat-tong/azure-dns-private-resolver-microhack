@@ -1,11 +1,11 @@
 
 targetScope = 'subscription'
 
-var vOnPremiseLocation = 'westcentralus'
-var vAzureLocation = 'eastus2'
+var vOnPremiseLocation = 'northeurope'
+var vAzureLocation = 'westeurope'
 
 resource resOnPremiseRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'onpremise-rg'
+  name: 'onpremise02-rg'
   location: vOnPremiseLocation
   tags: {
     environment: 'onprem'
@@ -15,7 +15,7 @@ resource resOnPremiseRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 resource resAzureHubRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'hub-rg'
+  name: 'hub02-rg'
   location: vAzureLocation
   tags: {
     environment: 'cloud'
@@ -25,7 +25,7 @@ resource resAzureHubRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 resource resAzureSpokeRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'spoke01-rg'
+  name: 'spoke02-rg'
   location: vAzureLocation
   tags: {
     environment: 'cloud'
@@ -62,8 +62,6 @@ module moduleOnPremLng 'lngw-onprem.bicep' = {
   name: 'mod-onprem-lngw-deployment'
   scope: resOnPremiseRG
   params: {
-    pHubVpnGwPip: moduleHubNetwork.outputs.outHubVpnGwPip
-    pHubAddressSpace: moduleHubNetwork.outputs.outHubVnetAddressSpace
     pRGLocation: resOnPremiseRG.location
   }
 }
@@ -72,9 +70,23 @@ module moduleHubLng 'lngw-hub.bicep' = {
   name: 'mod-hub-lngw-deployment'
   scope: resAzureHubRG
   params: {
-    pOnPremVpnGwPip: moduleOnPremiseNetwork.outputs.outOnPremiseVpnGwPip
-    pOnPremAddressSpace: moduleOnPremiseNetwork.outputs.outOnPremiseVnetAddressSpace
     pRGLocation: resAzureHubRG.location
+  }
+}
+
+module moduleHubPrivateDnsResolver 'dns-private-resolver-hub.bicep' = {
+  scope: resAzureHubRG
+  name: 'mod-hub-privatednsresolver-deployment'
+  params: {
+    pRGLocation: resAzureHubRG.location
+  }
+}
+
+module moduleOnPremPrivateDnsResolver 'dns-private-resolver-onpremise.bicep' = {
+  scope: resOnPremiseRG
+  name: 'mod-onprem-privatednsresolver-deployment'
+  params: {
+    pRGLocation: resAzureSpokeRG.location
   }
 }
 
