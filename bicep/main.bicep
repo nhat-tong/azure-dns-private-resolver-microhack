@@ -34,7 +34,7 @@ resource resAzureSpokeRG 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   }
 }
 
-module moduleOnPremiseNetwork 'onprem.bicep' = {
+module moduleOnPremiseNetwork 'network/onprem.bicep' = {
   name: 'mod-onprem-deployment'
   scope: resOnPremiseRG
   params: {
@@ -42,7 +42,7 @@ module moduleOnPremiseNetwork 'onprem.bicep' = {
   }
 }
 
-module moduleHubNetwork 'hub.bicep' = {
+module moduleHubNetwork 'network/hub.bicep' = {
   name: 'mod-hub-deployment'
   scope: resAzureHubRG
   params: {
@@ -50,7 +50,7 @@ module moduleHubNetwork 'hub.bicep' = {
   }
 }
 
-module moduleSpokeNetwork 'spoke.bicep' = {
+module moduleSpokeNetwork 'network/spoke.bicep' = {
   name: 'mod-spoke-deployment'
   scope: resAzureSpokeRG
   params: {
@@ -58,7 +58,7 @@ module moduleSpokeNetwork 'spoke.bicep' = {
   }
 }
 
-module moduleOnPremLng 'lngw-onprem.bicep' = {
+module moduleOnPremLng 'network/lngw-onprem.bicep' = {
   name: 'mod-onprem-lngw-deployment'
   scope: resOnPremiseRG
   params: {
@@ -66,7 +66,7 @@ module moduleOnPremLng 'lngw-onprem.bicep' = {
   }
 }
 
-module moduleHubLng 'lngw-hub.bicep' = {
+module moduleHubLng 'network/lngw-hub.bicep' = {
   name: 'mod-hub-lngw-deployment'
   scope: resAzureHubRG
   params: {
@@ -74,7 +74,7 @@ module moduleHubLng 'lngw-hub.bicep' = {
   }
 }
 
-module moduleHubPrivateDnsResolver 'dns-private-resolver-hub.bicep' = {
+module moduleHubPrivateDnsResolver 'private-dns-resolver/dns-private-resolver-hub.bicep' = {
   scope: resAzureHubRG
   name: 'mod-hub-privatednsresolver-deployment'
   params: {
@@ -82,7 +82,7 @@ module moduleHubPrivateDnsResolver 'dns-private-resolver-hub.bicep' = {
   }
 }
 
-module moduleOnPremPrivateDnsResolver 'dns-private-resolver-onpremise.bicep' = {
+module moduleOnPremPrivateDnsResolver 'private-dns-resolver/dns-private-resolver-onpremise.bicep' = {
   scope: resOnPremiseRG
   name: 'mod-onprem-privatednsresolver-deployment'
   params: {
