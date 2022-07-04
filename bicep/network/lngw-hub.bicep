@@ -30,7 +30,7 @@ resource resHubLngw 'Microsoft.Network/localNetworkGateways@2021-08-01' = {
 }
 
 resource resHubVnetGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' existing = {
-  name: 'hub-vpngw2'
+  name: 'hub-vpngw'
 }
 
 resource resHub2OnPremConnection 'Microsoft.Network/connections@2021-08-01' = {

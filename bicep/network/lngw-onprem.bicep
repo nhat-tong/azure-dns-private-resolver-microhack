@@ -8,7 +8,7 @@ resource resAzureVpnPIP 'Microsoft.Network/publicIPAddresses@2021-08-01' existin
 }
 
 resource resAzureVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' existing = {
-  name: 'hub-vpngw2'
+  name: 'hub-vpngw'
   scope: resourceGroup('hub02-rg')
 }
 

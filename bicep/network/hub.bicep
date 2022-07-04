@@ -1,7 +1,49 @@
 targetScope = 'resourceGroup'
 
+/* PARAMETERS */
 param pRGLocation string = resourceGroup().location
-var vAzureBgpAsn = 64000
+param pAddressPrefixes array = [ '10.221.0.0/21' ]
+param pDnsServers array = [ '10.221.2.4' ]
+param pHubSubnets array = [
+  {
+    name: 'GatewaySubnet'
+    properties: {
+      addressPrefix: '10.221.0.0/26'
+    }
+  }
+  {
+    name: 'snet-default'
+    properties: {
+      addressPrefix: '10.221.1.0/24'
+    }
+  }
+  {
+    name: 'snet-dns-inbound'
+    properties: {
+      addressPrefix: '10.221.2.0/28'
+    }
+  }
+  {
+    name: 'snet-dns-outbound'
+    properties: {
+      addressPrefix: '10.221.2.16/28'
+    }
+  }
+  {
+    name: 'AzureFirewallSubnet'
+    properties: {
+      addressPrefix: '10.221.3.0/26'
+    }
+  }
+]
+param pAzureBgpAsn int = 64000
+param pAdminUsername string = ''
+param pAdminPassword string = ''
+var tags = {
+  environment: 'cloud'
+  deployment: 'bicep'
+  microhack: 'dns-private-resolver'
+}
 
 /* VIRTUAL NETWORK */
 resource resHubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
@@ -9,53 +51,14 @@ resource resHubVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   location: pRGLocation
   properties: {
     addressSpace: {
-       addressPrefixes: [
-         '10.221.0.0/21'
-       ]
+       addressPrefixes: pAddressPrefixes
     }
     dhcpOptions: {
-       dnsServers: [
-         '10.221.2.4'
-       ]
+       dnsServers: pDnsServers
     }
-    subnets: [
-      {
-        name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: '10.221.0.0/26'
-        }
-      }
-      {
-        name: 'snet-default'
-        properties: {
-          addressPrefix: '10.221.1.0/24'
-        }
-      }
-      {
-        name: 'snet-dns-inbound'
-        properties: {
-          addressPrefix: '10.221.2.0/28'
-        }
-      }
-      {
-        name: 'snet-dns-outbound'
-        properties: {
-          addressPrefix: '10.221.2.16/28'
-        }
-      }
-      {
-        name: 'AzureFirewallSubnet'
-        properties: {
-          addressPrefix: '10.221.3.0/26'
-        }
-      }
-    ]
+    subnets: pHubSubnets
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 
   resource resGatewaySubnet 'subnets' existing = {
     name: 'GatewaySubnet'
@@ -131,15 +134,11 @@ resource resHubVpnGwPip 'Microsoft.Network/publicIPAddresses@2021-08-01' = {
   properties: {
     publicIPAllocationMethod: 'Dynamic'
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
-  name: 'hub-vpngw2'
+  name: 'hub-vpngw'
   location: pRGLocation
   properties: {
     gatewayType: 'Vpn'
@@ -151,7 +150,7 @@ resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
       tier: 'VpnGw1'
     }
     bgpSettings: {
-      asn: vAzureBgpAsn
+      asn: pAzureBgpAsn
     }
     ipConfigurations: [
       {
@@ -168,11 +167,7 @@ resource resHubVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
       }
     ]
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 /* VIRTUAL MACHINE */
@@ -201,11 +196,7 @@ resource resHubNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
       }
     ]
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
@@ -220,8 +211,8 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
     }
     osProfile: {
       computerName: 'hub-vm'
-      adminUsername: 'adminuser'
-      adminPassword: 'Thqnhat@199'
+      adminUsername: pAdminUsername
+      adminPassword: pAdminPassword
       linuxConfiguration: {
         disablePasswordAuthentication: false
       }
@@ -251,11 +242,7 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       vmSize: 'Standard_D2as_v5'
     }
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 output outHubVnetId string = resHubVnet.id
