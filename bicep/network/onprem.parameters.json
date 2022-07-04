@@ -3,58 +3,52 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "pRGLocation": {
-            "value": "westeurope"
+            "value": "northeurope"
         },
         "pAddressPrefixes": {
             "value": [
-              "10.221.0.0/21"
+              "10.233.0.0/21"
             ]
         },
         "pDnsServers": {
             "value": [
-              "10.221.2.4"
+              "10.233.2.4"
             ]
         },
-        "pHubSubnets": {
+        "pOnpremSubnets": {
             "value": [
               {
                 "name": "GatewaySubnet",
                 "properties": {
-                  "addressPrefix": "10.221.0.0/26"
+                  "addressPrefix": "10.233.0.0/26"
                 }
               },
               {
                 "name": "snet-default",
                 "properties": {
-                  "addressPrefix": "10.221.1.0/24"
+                  "addressPrefix": "10.233.1.0/24"
                 }
               },
               {
                 "name": "snet-dns-inbound",
                 "properties": {
-                  "addressPrefix": "10.221.2.0/28"
+                  "addressPrefix": "10.233.2.0/28"
                 }
               },
               {
                 "name": "snet-dns-outbound",
                 "properties": {
-                  "addressPrefix": "10.221.2.16/28"
-                }
-              },
-              {
-                "name": "AzureFirewallSubnet",
-                "properties": {
-                  "addressPrefix": "10.221.3.0/26"
+                  "addressPrefix": "10.233.2.16/28"
                 }
               }
             ]
         },
-        "pAzureBgpAsn": {
-            "value": 64000
+        "pOnPremBgpAsn": {
+            "value": 65000
         },
-        "pVmHub": {
+        "pVmOnPrem": {
             "value": {
-              "name": "hub-vm",
+              "name": "onpremise-vm",
               "publisher": "canonical",
               "offer": "UbuntuServer",
               "sku": "18_04-lts-gen2",

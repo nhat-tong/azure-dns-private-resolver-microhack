@@ -39,6 +39,14 @@ param pHubSubnets array = [
 param pAzureBgpAsn int = 64000
 param pAdminUsername string = ''
 param pAdminPassword string = ''
+param pVmHub object = {
+  name: 'hub-vm'
+  publisher: 'canonical'
+  offer: 'UbuntuServer'
+  sku: '18_04-lts-gen2'
+  version: 'latest'
+  vmSize: 'Standard_D2as_v5'
+}
 var tags = {
   environment: 'cloud'
   deployment: 'bicep'
@@ -200,7 +208,7 @@ resource resHubNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
 }
 
 resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: 'hub-vm'
+  name: pVmHub.name
   location: pRGLocation
   properties: {
     diagnosticsProfile: {
@@ -210,7 +218,7 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     osProfile: {
-      computerName: 'hub-vm'
+      computerName: pVmHub.name
       adminUsername: pAdminUsername
       adminPassword: pAdminPassword
       linuxConfiguration: {
@@ -232,14 +240,14 @@ resource resHubVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         name: 'hub-vm-od01'
       }
       imageReference: {
-        publisher: 'canonical'
-        offer: 'UbuntuServer'
-        sku: '18_04-lts-gen2'
-        version: 'latest'
+        publisher: pVmHub.publisher
+        offer: pVmHub.offer
+        sku: pVmHub.sku
+        version: pVmHub.version
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_D2as_v5'
+      vmSize: pVmHub.vmSize
     }
   }
   tags: tags

@@ -6,9 +6,12 @@ az deployment sub create --location westeurope --confirm-with-what-if --template
 
 ### 1. Deploy Azure Vnet & Azure Vpn Gateway
 ```
-az deployment group create --confirm-with-what-if --template-file=./bicep/network/onprem.bicep --resource-group onpremise02-rg --no-wait
+az deployment group create --confirm-with-what-if --template-file=./bicep/network/onprem.bicep \
+                           --parameters @./bicep/network/onprem.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD]  \
+                           --resource-group [ONPREMISE_RG] --no-wait
 
-az deployment group create --confirm-with-what-if --template-file=./bicep/network/hub.bicep --parameters @./bicep/network/hub.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD] --resource-group [HUB_RG] --no-wait
+az deployment group create --confirm-with-what-if --template-file=./bicep/network/hub.bicep \ 
+                           --parameters @./bicep/network/hub.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD] \ --resource-group [HUB_RG] --no-wait
 
 az deployment group create --confirm-with-what-if --template-file=./bicep/network/spoke.bicep --resource-group spoke02-rg --no-wait
 ```

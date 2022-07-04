@@ -1,7 +1,51 @@
 targetScope = 'resourceGroup'
 
+/* PARAMETERS */
 param pRGLocation string = resourceGroup().location
-var vOnPremBgpAsn = 65000
+param pAddressPrefixes array = [ '10.233.0.0/21' ]
+param pDnsServers array = [ '10.233.2.4' ]
+param pOnpremSubnets array = [
+  {
+    name: 'GatewaySubnet'
+    properties: {
+      addressPrefix: '10.233.0.0/26'
+    }
+  }
+  {
+    name: 'snet-default'
+    properties: {
+      addressPrefix: '10.233.1.0/24'
+    }
+  }
+  {
+    name: 'snet-dns-inbound'
+    properties: {
+      addressPrefix: '10.233.2.0/28'
+    }
+  }
+  {
+    name: 'snet-dns-outbound'
+    properties: {
+      addressPrefix: '10.233.2.16/28'
+    }
+  }
+]
+param pOnPremBgpAsn int = 65000
+param pAdminUsername string = ''
+param pAdminPassword string = ''
+param pVmOnPrem object = {
+  name: 'onpremise-vm'
+  publisher: 'canonical'
+  offer: 'UbuntuServer'
+  sku: '18_04-lts-gen2'
+  version: 'latest'
+  vmSize: 'Standard_D2as_v5'
+}
+var tags = {
+  environment: 'onprem'
+  deployment: 'bicep'
+  microhack: 'dns-private-resolver'
+}
 
 /* ON-PREMISE VIRTUAL NETWORK */
 resource resOnPremiseVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
@@ -9,47 +53,14 @@ resource resOnPremiseVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   location: pRGLocation
   properties: {
     addressSpace: {
-      addressPrefixes: [
-        '10.233.0.0/21'
-      ]
+      addressPrefixes: pAddressPrefixes
     }
     dhcpOptions: {
-      dnsServers: [
-        '10.233.2.4'
-      ]
+      dnsServers: pDnsServers
     }
-    subnets: [
-      {
-        name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: '10.233.0.0/26'
-        }
-      }
-      {
-        name: 'snet-default'
-        properties: {
-          addressPrefix: '10.233.1.0/24'
-        }
-      }
-      {
-        name: 'snet-dns-inbound'
-        properties: {
-          addressPrefix: '10.233.2.0/28'
-        }
-      }
-      {
-        name: 'snet-dns-outbound'
-        properties: {
-          addressPrefix: '10.233.2.16/28'
-        }
-      }
-    ]
+    subnets: pOnpremSubnets
   }
-  tags: {
-    environment: 'onprem'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 
   resource resGatewaySubnet 'subnets' existing = {
     name: 'GatewaySubnet'
@@ -96,11 +107,7 @@ resource resOnPremiseVpnGwPip 'Microsoft.Network/publicIPAddresses@2021-08-01' =
   properties: {
     publicIPAllocationMethod: 'Dynamic'
   }
-  tags: {
-    environment: 'onprem'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = {
@@ -116,7 +123,7 @@ resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01'
       tier: 'VpnGw1'
     }
     bgpSettings: {
-      asn: vOnPremBgpAsn
+      asn: pOnPremBgpAsn
     }
     ipConfigurations: [
       {
@@ -133,11 +140,7 @@ resource resOnPremiseVpnGw 'Microsoft.Network/virtualNetworkGateways@2021-08-01'
       }
     ]
   }
-  tags: {
-    environment: 'onprem'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 /* VIRTUAL MACHINE */
@@ -174,7 +177,7 @@ resource resOnPremNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
 }
 
 resource resOnpremVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: 'onpremise-vm'
+  name: pVmOnPrem.name
   location: pRGLocation
   properties: {
     diagnosticsProfile: {
@@ -184,9 +187,9 @@ resource resOnpremVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     osProfile: {
-      computerName: 'onpremise-vm'
-      adminUsername: 'adminuser'
-      adminPassword: 'Thqnhat@199'
+      computerName: pVmOnPrem.name
+      adminUsername: pAdminUsername
+      adminPassword: pAdminPassword
       linuxConfiguration: {
         disablePasswordAuthentication: false
       }
@@ -206,21 +209,17 @@ resource resOnpremVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         name: 'onpremise-vm-od01'
       }
       imageReference: {
-        publisher: 'canonical'
-        offer: 'UbuntuServer'
-        sku: '18_04-lts-gen2'
-        version: 'latest'
+        publisher: pVmOnPrem.publisher
+        offer: pVmOnPrem.offer
+        sku: pVmOnPrem.sku
+        version: pVmOnPrem.version
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_D2as_v5'
+      vmSize: pVmOnPrem.vmSize
     }
   }
-  tags: {
-    environment: 'onprem'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 /* OUTPUTS */
