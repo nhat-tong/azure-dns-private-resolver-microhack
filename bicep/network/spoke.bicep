@@ -1,7 +1,34 @@
 targetScope = 'resourceGroup'
 
 var privateEndpointName = 'blob-private-endpoint'
+/* PARAMETERS */
 param pRGLocation string = resourceGroup().location
+param pAddressPrefixes array = [ '10.221.8.0/24' ]
+param pDnsServers array = [ '10.221.2.4' ]
+param pSpokeSubnets array = [
+  {
+    name: 'snet-default'
+    properties: {
+      addressPrefix: '10.221.8.0/24'
+      privateEndpointNetworkPolicies: 'Enabled'
+    }
+  }
+]
+param pAdminUsername string = ''
+param pAdminPassword string = ''
+param pVmSpoke object = {
+  name: 'spoke01-vm'
+  publisher: 'canonical'
+  offer: 'UbuntuServer'
+  sku: '18_04-lts-gen2'
+  version: 'latest'
+  vmSize: 'Standard_D2as_v5'
+}
+var tags = {
+  environment: 'cloud'
+  deployment: 'bicep'
+  microhack: 'dns-private-resolver'
+}
 
 /* VIRTUAL NETWORK */
 resource resSpokeVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
@@ -9,30 +36,14 @@ resource resSpokeVnet 'Microsoft.Network/virtualNetworks@2021-08-01' = {
   location: pRGLocation
   properties: {
     addressSpace: {
-      addressPrefixes: [
-        '10.221.8.0/24'
-      ]
+      addressPrefixes: pAddressPrefixes
     }
     dhcpOptions: {
-      dnsServers: [
-        '10.221.2.4'
-      ]
+      dnsServers: pDnsServers
     }
-    subnets: [
-      {
-        name: 'snet-default'
-        properties: {
-          addressPrefix: '10.221.8.0/24'
-          privateEndpointNetworkPolicies: 'Enabled'
-        }
-      }
-    ]
+    subnets: pSpokeSubnets
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 
   resource resDefaultSnet 'subnets' existing = {
     name: 'snet-default'
@@ -100,15 +111,11 @@ resource resSpokeNic 'Microsoft.Network/networkInterfaces@2021-08-01' = {
       }
     ]
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 resource resSpokeVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
-  name: 'spoke01-vm'
+  name: pVmSpoke.name
   location: pRGLocation
   properties: {
     diagnosticsProfile: {
@@ -118,9 +125,9 @@ resource resSpokeVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
       }
     }
     osProfile: {
-      computerName: 'spoke01-vm'
-      adminUsername: 'adminuser'
-      adminPassword: 'Thqnhat@199'
+      computerName: pVmSpoke.name
+      adminUsername: pAdminUsername
+      adminPassword: pAdminPassword
       linuxConfiguration: {
         disablePasswordAuthentication: false
       }
@@ -140,21 +147,17 @@ resource resSpokeVm 'Microsoft.Compute/virtualMachines@2021-11-01' = {
         name: 'hub-vm-od01'
       }
       imageReference: {
-        publisher: 'canonical'
-        offer: 'UbuntuServer'
-        sku: '18_04-lts-gen2'
-        version: 'latest'
+        publisher: pVmSpoke.publisher
+        offer: pVmSpoke.offer
+        sku: pVmSpoke.sku
+        version: pVmSpoke.version
       }
     }
     hardwareProfile: {
-      vmSize: 'Standard_D2as_v5'
+      vmSize: pVmSpoke.vmSize
     }
   }
-  tags: {
-    environment: 'cloud'
-    deployment: 'bicep'
-    microhack: 'dns-private-resolver'
-  }
+  tags: tags
 }
 
 /* PRIVATE ENDPOINT */

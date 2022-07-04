@@ -11,9 +11,11 @@ az deployment group create --confirm-with-what-if --template-file=./bicep/networ
                            --resource-group [ONPREMISE_RG] --no-wait
 
 az deployment group create --confirm-with-what-if --template-file=./bicep/network/hub.bicep \ 
-                           --parameters @./bicep/network/hub.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD] \ --resource-group [HUB_RG] --no-wait
+                        --parameters @./bicep/network/hub.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD] \ --resource-group [HUB_RG] --no-wait
 
-az deployment group create --confirm-with-what-if --template-file=./bicep/network/spoke.bicep --resource-group spoke02-rg --no-wait
+az deployment group create --confirm-with-what-if --template-file=./bicep/network/spoke.bicep \
+                            --parameters @./bicep/network/spoke.parameters.json -pAdminUsername [YOUR_ADMIN_USER] -pAdminPassword [YOUR_ADMIN_PASSWORD] \
+                            --resource-group spoke02-rg --no-wait
 ```
 ### 2. Deploy Local Network Gateway
 ```

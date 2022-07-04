@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "pRGLocation": {
+            "value": "westeurope"
+        },
+        "pAddressPrefixes": {
+            "value": [
+              "10.221.8.0/24"
+            ]
+        },
+        "pDnsServers": {
+            "value": [
+              "10.221.2.4"
+            ]
+        },
+        "pSpokeSubnets": {
+            "value": [
+              {
+                "name": "snet-default",
+                "properties": {
+                  "addressPrefix": "10.221.8.0/24",
+                  "privateEndpointNetworkPolicies": "Enabled"
+                }
+              }
+            ]
+        },
+        "pVmSpoke": {
+            "value": {
+              "name": "spoke01-vm",
+              "publisher": "canonical",
+              "offer": "UbuntuServer",
+              "sku": "18_04-lts-gen2",
+              "version": "latest",
+              "vmSize": "Standard_D2as_v5"
+            }
+        }
+    }
+}
